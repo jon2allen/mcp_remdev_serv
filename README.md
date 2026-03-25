@@ -123,22 +123,79 @@ Writes text content to a file on the remote server using SCP.
 
 **Returns:** Success message or error description.
 
-### `view_file(file_path: str, grep_pattern: str = None)`
-Reads a file from the remote server, optionally filtering with grep.
+### `view_file(file_path: str, start_line: int = None, end_line: int = None, grep_pattern: str = None)`
+Reads a file from the remote server. Supports line-range slicing and filtering. 
+Defaults to reading the first **2000 lines** if no range is specified.
+
+### `list_dir(directory_path: str = ".", sort_by: str = "name")`
+Lists the contents of a directory on the remote server (non-recursive).
 
 **Parameters:**
-- `file_path`: Remote file path
-- `grep_pattern`: Optional extended regex pattern for filtering
+- `directory_path`: Directory to list (defaults to current)
+- `sort_by`: 'name' (alphabetical) or 'time' (newest first)
 
-**Returns:** File content or error message.
-
-### `list_remote_files(recursive: bool = False)`
-Lists files in the current remote working directory.
+### `find_by_name(pattern: str, search_directory: str = ".", max_depth: int = None, type_filter: str = "any", sort_by: str = "name")`
+Search for files and directories matching a pattern.
 
 **Parameters:**
-- `recursive`: If true, recursively list all subdirectories
+- `pattern`: Glob-style pattern (e.g., `*.py`)
+- `search_directory`: Starting directory
+- `max_depth`: Optional recursion depth
+- `type_filter`: One of "any", "file", or "directory"
+- `sort_by`: 'name' or 'time' (newest first)
 
-**Returns:** Newline-separated list of file paths.
+### `grep_search(query: str, search_path: str = ".", case_insensitive: bool = True, is_regex: bool = False)`
+Search for text patterns within files on the remote server.
+
+**Parameters:**
+- `query`: Text or regex pattern
+- `search_path`: File or directory to search
+- `case_insensitive`: Ignore case if true
+- `is_regex`: Treat query as extended regex if true
+
+**Returns:** Grep result output.
+
+### `replace_file_content(file_path: str, target_content: str, replacement_content: str, start_line: int = None, end_line: int = None, replace_all: bool = False)`
+Replaces text in a remote file.
+
+**Parameters:**
+- `file_path`: Target remote path
+- `target_content`: The exact text to replace
+- `replacement_content`: The new text
+- `start_line` / `end_line`: Optional line range constraints
+- `replace_all`: If true, replaces all occurrences in the file
+
+### `multi_replace_file_content(file_path: str, replacement_chunks: list)`
+Apply multiple non-contiguous replacements to a remote file in one operation.
+
+**Parameters:**
+- `file_path`: Target remote path
+- `replacement_chunks`: List of dictionaries with `TargetContent` and `ReplacementContent` keys.
+
+**Returns:** Success message or error.
+
+## Tool Origins
+
+This server combines the best practices from several major AI development toolsets to create a hybrid experience for remote development.
+
+### Antigravity (antigravity_tools.md)
+*   **run_command**: Asynchronous remote execution with full output capture.
+*   **file_write**: Secure file creation and updates via SCP.
+*   **list_dir**: Standard directory navigation and listing.
+*   **find_by_name**: Multilingual file discovery using the find command.
+*   **grep_search**: High-speed recursive text searching.
+*   **replace_file_content**: Targeted byte-perfect string replacement.
+*   **multi_replace_file_content**: Batch processing of non-contiguous edits in a single call.
+
+### Vibe (tools_vibe.md)
+*   **search_replace**: Implemented the SEARCH/REPLACE block protocol, which is highly robust for code refactoring and handles complex whitespace and indentation better than simple strings.
+*   **git_grep**: Added a "Smart Search" engine that automatically detects Git repositories to respect .gitignore and .codeignore rules, eliminating search noise.
+*   **project_todo**: Created a structured task manager that creates and maintains a TODO.json file on the remote server to track progress across sessions.
+
+### OpenCode (open_code_tools.md)
+*   **Time-Sorted Discovery**: Added the sort_by="time" feature to both list_dir and find_by_name. This allows you to list the most recently modified files first—essential for debugging regressions.
+*   **Global Edits**: Added the replace_all flag to replace_file_content, enabling bulk string replacements throughout an entire file in one step.
+*   **High-Volume Ingestion**: Updated the default line limit of the view_file tool to 2,000 lines, allowing the model to ingest much larger chunks of source code or logs at once.
 
 ## Resources
 
@@ -209,6 +266,14 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+## Changelog
+
+### 2026-03-24
+- **Expanded Toolset**: Added `list_dir`, `find_by_name`, `grep_search`, `replace_file_content`, and `multi_replace_file_content` to match the core Antigravity toolset.
+- **Enhanced `view_file`**: Added support for `start_line` and `end_line` slicing for reading large files in chunks.
+- **Improved Testing**: Updated `test_tools.py` with comprehensive test cases for all new tools.
+- **Developer Environment**: Added support for `.venv` based testing with `fastmcp` dependency.
 
 ## Contributing
 
